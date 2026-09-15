@@ -1,0 +1,24 @@
+{
+  "schema_version": "article-json-v0.1-draft",
+  "article_id": "ART-SAMPLE-APHASIA-001",
+  "display_title": "失語症リハビリ、最適な「量」は？",
+  "manga_final": "assets/aphasia_jado_manga.png",
+  "concise_summary": "# 失語症リハビリは「どれくらい」やればよい？\n\n**Clinical Question**  \n脳卒中後失語症に対する言語療法は、総量・週あたりの強度・頻度をどの程度確保すると、より大きな改善が期待できるのか。\n\n**Bottom Line**  \n25試験、959人の個人参加者データを用いたネットワーク・メタ解析では、総療法時間20〜50時間、週2〜4時間または9時間以上、週3〜5日程度の言語療法が、言語機能や機能的コミュニケーションのより大きな改善と関連していた。また、単に訓練時間を増やすだけでなく、理解と表出を組み合わせ、生活に合わせて内容を調整し、自宅練習を併用することも良好な成績と関連していた。\n\nこの研究の特徴は、各研究の平均値だけをまとめる通常のメタ解析ではなく、参加者一人ひとりのデータを集めたindividual participant data（IPD）メタ解析である点にある。年齢、性別、発症後期間、失語症の重症度などを調整しながら、療法の「総量」「週あたり時間」「週あたり日数」とアウトカムの関連を検討している。\n\n総療法量では、20〜50時間の範囲で全体的言語能力と聴覚的理解の改善が大きかった。一方、20時間以下では聴覚的理解の改善が明確ではなかった。頻度についても、全体的言語能力や機能的コミュニケーションでは週3〜5日以上、聴覚的理解では週4〜5日の条件で大きな改善がみられた。\n\nただし、ここで示された数字をそのまま「最適処方」と考えることはできない。これは異なる治療内容・時期・対象者を含む研究を統合して得られた探索的な関連であり、特定の治療量そのものの因果効果を証明した研究ではない。\n\nそれでも、失語症リハビリを考える際に、「何をするか」だけでなく、「どの程度の量と頻度を確保するか」も治療設計の重要な要素であることを示す、臨床的に参考になる研究である。\n\n**Brady MC, et al. Stroke. 2022;53:956–967.**\n",
+  "author_commentary": null,
+  "citation": "Brady MC, Ali M, VandenBerg K, et al. Stroke. 2022;53:956–967.",
+  "public_url": "https://umri-web.github.io/p/ART-SAMPLE-APHASIA-001/",
+  "qr_target": "https://umri-web.github.io/p/ART-SAMPLE-APHASIA-001/",
+  "publication_status": "sample_preview",
+  "book_format_id": "FMT-B5-v1.0-EDITOR-APPROVED",
+  "character_rights_clearance_status": "approved_user_attested",
+  "factcheck_public": "# 補足を読む — ファクトチェック要点\n\nこの短い解説は全体として原論文を概ね正確に反映している。\n\nただし、厳密には以下に注意する。\n\n- 20〜50時間は全アウトカムに共通する万能の「最適量」ではない。\n- 週2〜4時間または9時間以上という所見は非線形で、単純な用量反応を意味しない。\n- 本研究は治療量を直接無作為化して因果的な最適量を証明した試験ではない。\n- 著者ら自身も探索的所見として位置づけている。\n- アウトカムごとに使用された試験数・参加者数は異なる。\n\n公開版では必要に応じて原文fact-checkログへのリンクも付ける。\n",
+  "missing_fields": [
+    "general_explanation",
+    "professional_explanation",
+    "author_commentary",
+    "doi",
+    "pmid",
+    "original_article_url"
+  ],
+  "content_version_hash": "sha256:01875639848bcda288c856a9725a259aef2e4152a9ccf0b8adcd730c20f1132a"
+}
