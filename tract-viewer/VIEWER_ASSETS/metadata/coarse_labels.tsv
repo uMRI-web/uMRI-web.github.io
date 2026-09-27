@@ -1,0 +1,26 @@
+coarse_id	name	source_labels	mask_file	voxels	volume_mm3	volume_ml
+1	Left_Frontal	1003,1012,1014,1017,1018,1019,1020,1024,1027,1028,1032	segmentation/coarse/roi_masks/01_Left_Frontal.nii.gz	118258	118258.0	118.258
+2	Right_Frontal	2003,2012,2014,2017,2018,2019,2020,2024,2027,2028,2032	segmentation/coarse/roi_masks/02_Right_Frontal.nii.gz	116512	116512.0	116.512
+3	Left_Parietal	1008,1022,1025,1029,1031	segmentation/coarse/roi_masks/03_Left_Parietal.nii.gz	74830	74830.0	74.83
+4	Right_Parietal	2008,2022,2025,2029,2031	segmentation/coarse/roi_masks/04_Right_Parietal.nii.gz	78586	78586.0	78.586
+5	Left_Temporal	1001,1006,1007,1009,1015,1016,1030,1033,1034	segmentation/coarse/roi_masks/05_Left_Temporal.nii.gz	75202	75202.0	75.202
+6	Right_Temporal	2001,2006,2007,2009,2015,2016,2030,2033,2034	segmentation/coarse/roi_masks/06_Right_Temporal.nii.gz	72040	72040.0	72.04
+7	Left_Occipital	1005,1011,1013,1021	segmentation/coarse/roi_masks/07_Left_Occipital.nii.gz	32217	32217.0	32.217
+8	Right_Occipital	2005,2011,2013,2021	segmentation/coarse/roi_masks/08_Right_Occipital.nii.gz	32863	32863.0	32.863
+9	Left_Cingulate	1002,1010,1023,1026	segmentation/coarse/roi_masks/09_Left_Cingulate.nii.gz	13422	13422.0	13.422
+10	Right_Cingulate	2002,2010,2023,2026	segmentation/coarse/roi_masks/10_Right_Cingulate.nii.gz	14130	14130.0	14.13
+11	Left_Insula	1035	segmentation/coarse/roi_masks/11_Left_Insula.nii.gz	9307	9307.0	9.307
+12	Right_Insula	2035	segmentation/coarse/roi_masks/12_Right_Insula.nii.gz	9886	9886.0	9.886
+13	Left_BasalGanglia	11,12,13,26	segmentation/coarse/roi_masks/13_Left_BasalGanglia.nii.gz	15861	15861.0	15.861
+14	Right_BasalGanglia	50,51,52,58	segmentation/coarse/roi_masks/14_Right_BasalGanglia.nii.gz	15544	15544.0	15.544
+15	Left_Thalamus	10	segmentation/coarse/roi_masks/15_Left_Thalamus.nii.gz	9705	9705.0	9.705
+16	Right_Thalamus	49	segmentation/coarse/roi_masks/16_Right_Thalamus.nii.gz	9368	9368.0	9.368
+17	Left_Hippocampus_Amygdala	17,18	segmentation/coarse/roi_masks/17_Left_Hippocampus_Amygdala.nii.gz	7828	7828.0	7.828
+18	Right_Hippocampus_Amygdala	53,54	segmentation/coarse/roi_masks/18_Right_Hippocampus_Amygdala.nii.gz	7533	7533.0	7.533
+19	Brainstem	16	segmentation/coarse/roi_masks/19_Brainstem.nii.gz	27586	27586.0	27.586
+20	Left_Cerebellum	7,8	segmentation/coarse/roi_masks/20_Left_Cerebellum.nii.gz	89406	89406.0	89.406
+21	Right_Cerebellum	46,47	segmentation/coarse/roi_masks/21_Right_Cerebellum.nii.gz	86632	86632.0	86.632
+22	Corpus_Callosum		segmentation/coarse/roi_masks/22_Corpus_Callosum.nii.gz	0	0.0	0.0
+23	Left_Lateral_Ventricle	4,5	segmentation/coarse/roi_masks/23_Left_Lateral_Ventricle.nii.gz	11072	11072.0	11.072
+24	Right_Lateral_Ventricle	43,44	segmentation/coarse/roi_masks/24_Right_Lateral_Ventricle.nii.gz	10988	10988.0	10.988
+25	Midline_Ventricles	14,15	segmentation/coarse/roi_masks/25_Midline_Ventricles.nii.gz	3924	3924.0	3.924
