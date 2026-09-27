@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <meta name="theme-color" content="#101418" />
+  <title>uMRI Tract × Segment Viewer</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">uMRI</div>
+        <div>
+          <h1>Tract × Segment Viewer</h1>
+          <p>標準脳上で白質路と関連領域を同時表示</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <label for="tractSelect">Tract</label>
+        <select id="tractSelect"></select>
+
+        <div class="side-row" id="sideRow">
+          <span class="mini-label">Side</span>
+          <div class="segmented">
+            <button type="button" data-side="L">L</button>
+            <button type="button" data-side="R">R</button>
+            <button type="button" data-side="B" class="active">Both</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel toggles">
+        <label class="check"><input id="showTract" type="checkbox" checked /> <span>Tract</span></label>
+        <label class="check"><input id="showCore" type="checkbox" checked /> <span>CORE segment</span></label>
+        <label class="check"><input id="showLandmark" type="checkbox" checked /> <span>LANDMARK segment</span></label>
+        <label class="check"><input id="showGlass" type="checkbox" checked /> <span>Glass brain (3D)</span></label>
+      </section>
+
+      <section class="panel sliders">
+        <label>Tract opacity <output id="tractOpacityOut">0.70</output></label>
+        <input id="tractOpacity" type="range" min="0" max="1" step="0.05" value="0.70" />
+        <label>Segment opacity <output id="roiOpacityOut">0.35</output></label>
+        <input id="roiOpacity" type="range" min="0" max="1" step="0.05" value="0.35" />
+        <label>Glass opacity <output id="glassOpacityOut">0.13</output></label>
+        <input id="glassOpacity" type="range" min="0" max="0.5" step="0.01" value="0.13" />
+      </section>
+
+      <section class="panel">
+        <div class="legend">
+          <div><span class="swatch tract-l"></span>tract L</div>
+          <div><span class="swatch tract-r"></span>tract R</div>
+          <div><span class="swatch core"></span>CORE</div>
+          <div><span class="swatch landmark"></span>LANDMARK</div>
+        </div>
+      </section>
+
+      <section class="panel anatomy-panel">
+        <h2>関連領域</h2>
+        <div id="roiList" class="roi-list"></div>
+      </section>
+
+      <section class="panel note">
+        <strong>教育用表示</strong>
+        <p>標準脳atlas上の概略表示です。CORE / LANDMARK は「このtractを理解するために一緒に見る領域」で、厳密な線維終末を意味しません。</p>
+      </section>
+    </aside>
+
+    <main class="viewer-wrap">
+      <header class="viewer-toolbar">
+        <div id="status">読み込み準備中…</div>
+        <div class="toolbar-actions">
+          <button id="resetView" type="button">Reset view</button>
+        </div>
+      </header>
+      <div class="canvas-wrap">
+        <canvas id="gl"></canvas>
+        <div id="loading" class="loading hidden"><div class="spinner"></div><span>loading…</span></div>
+      </div>
+      <footer class="viewer-footer">
+        <span>Axial / Sagittal / 3D / Coronal</span>
+        <span id="location">&nbsp;</span>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
