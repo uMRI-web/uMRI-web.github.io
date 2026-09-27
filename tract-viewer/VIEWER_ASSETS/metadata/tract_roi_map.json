@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "purpose": "Initial educational viewer mapping.",
+    "warning": "CORE/LANDMARK relations are display recommendations for teaching, not exact tract endpoint ground truth. EDU_ROI structures such as corona radiata/internal capsule/cerebral peduncle are intentionally deferred.",
+    "master_segmentation": "segmentation/master/gyral_master.nii.gz"
+  },
+  "CST": {
+    "L": {
+      "core": [
+        {"label_id": 1024, "name": "ctx-lh-precentral", "mask_file": "segmentation/roi_masks/1024_ctx-lh-precentral.nii.gz"},
+        {"label_id": 1017, "name": "ctx-lh-paracentral", "mask_file": "segmentation/roi_masks/1017_ctx-lh-paracentral.nii.gz"}
+      ],
+      "landmark": [
+        {"label_id": 12, "name": "Left-Putamen", "mask_file": "segmentation/roi_masks/0012_Left-Putamen.nii.gz"},
+        {"label_id": 13, "name": "Left-Pallidum", "mask_file": "segmentation/roi_masks/0013_Left-Pallidum.nii.gz"},
+        {"label_id": 10, "name": "Left-Thalamus", "mask_file": "segmentation/roi_masks/0010_Left-Thalamus.nii.gz"},
+        {"label_id": 16, "name": "Brain-Stem", "mask_file": "segmentation/roi_masks/0016_Brain-Stem.nii.gz"}
+      ]
+    },
+    "R": {
+      "core": [
+        {"label_id": 2024, "name": "ctx-rh-precentral", "mask_file": "segmentation/roi_masks/2024_ctx-rh-precentral.nii.gz"},
+        {"label_id": 2017, "name": "ctx-rh-paracentral", "mask_file": "segmentation/roi_masks/2017_ctx-rh-paracentral.nii.gz"}
+      ],
+      "landmark": [
+        {"label_id": 51, "name": "Right-Putamen", "mask_file": "segmentation/roi_masks/0051_Right-Putamen.nii.gz"},
+        {"label_id": 52, "name": "Right-Pallidum", "mask_file": "segmentation/roi_masks/0052_Right-Pallidum.nii.gz"},
+        {"label_id": 49, "name": "Right-Thalamus", "mask_file": "segmentation/roi_masks/0049_Right-Thalamus.nii.gz"},
+        {"label_id": 16, "name": "Brain-Stem", "mask_file": "segmentation/roi_masks/0016_Brain-Stem.nii.gz"}
+      ]
+    }
+  }
+}
