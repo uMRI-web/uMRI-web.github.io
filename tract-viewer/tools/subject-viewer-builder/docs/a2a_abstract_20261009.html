@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>A2a FA-informed atlas deformation 学会抄録風まとめ 2026-10-09</title>
+<style>
+@page { size: A4; margin: 18mm 18mm 18mm 18mm; }
+html, body { font-family: "Noto Sans CJK JP", "Noto Sans JP", sans-serif; color:#111; }
+body { font-size: 10.5pt; line-height: 1.72; }
+h1 { font-size: 15.5pt; line-height:1.45; margin:0 0 12pt 0; font-weight:700; }
+.meta { font-size:9pt; color:#555; margin-bottom:14pt; }
+h2 { font-size:11pt; margin:11pt 0 3pt; padding:0; font-weight:700; }
+p { margin:0 0 5pt 0; text-align:justify; }
+.url { font-size:9pt; word-break:break-all; }
+.footer { margin-top:14pt; padding-top:7pt; border-top:0.4pt solid #bbb; font-size:8.5pt; color:#555; }
+</style>
+</head>
+<body>
+<h1>拡散MRI情報を用いた標準白質路アトラスの個人T1強調MRI上への変形と教育用Web Viewerへの実装</h1>
+<div class="meta">学会抄録風作業記録　2026年10月9日</div>
+
+<h2>【目的】</h2>
+<p>通常診療で広く撮像されるT1強調MRI上で白質路の位置を把握しやすくするため、同一被験者の拡散MRIから得られたfractional anisotropy（FA）画像を解剖学的位置合わせの媒介として用い、標準白質路probabilistic atlasを個人T1強調MRI上へ変形する手法を試作した。さらに、深層学習による脳領域自動分割結果と統合し、白質路と関連解剖領域を同時表示する教育用Web Viewerを構築した。</p>
+
+<h2>【方法】</h2>
+<p>既に研究・教育目的で公開している同一被験者のT1強調MRIおよびDTI由来FA画像を使用した。まずNIfTIヘッダ情報を確認し、旧データに存在したqform/sform等の幾何情報の不整合を修正した。個人FA画像をFMRIB58 FA標準画像へ線形位置合わせした後、FNIRTによる非線形変形を行い、その逆変換を作成した。JHU white-matter tractography atlas由来のprobabilistic tract mapをこの逆変換により個人FA空間へ移し、さらに個人FA画像と個人T1強調MRI間の剛体変換を用いて個人T1空間へ変換した。錐体路、視床前放線、上縦束、側頭部上縦束、下前頭後頭束、下縦束、鉤状束、帯状束、脳梁線維等、計20本の左右別または正中白質路を対象とした。</p>
+<p>個人T1強調MRIにはSynthSegを再適用し、1 mm isotropicのT1画像およびparcellationを生成した。そこから各白質路に関連する皮質・皮質下構造を抽出し、既存Viewerと同様にCOREおよびLANDMARKとして構造化した。白質路probability map、5% threshold mask、脳領域mask、および3D meshを作成し、2D三方向断面と3D表示を同期させたWeb Viewerへ実装した。</p>
+
+<h2>【結果】</h2>
+<p>FA画像から標準FA空間への非線形位置合わせ、および逆変換による標準白質路アトラスの個人FA空間への投影は良好に行われた。さらにFA-T1変換を介して、白質路probability mapを個人T1強調MRI上へ表示可能であった。20白質路について個人T1空間上のprobability mapを作成し、左右統合画像を含め計29画像を生成した。SynthSegによる個人脳parcellationから77の解剖学的ROIを抽出し、白質路、CORE、LANDMARK、および3D脳表を同時表示するWeb Viewerを構築した。代表白質路について目視確認を行い、T1画像、白質路および関連ROIの位置関係に明らかな破綻を認めなかった。</p>
+<p>作成した研究デモはWeb上で閲覧可能とした。</p>
+<p class="url">https://umri-web.github.io/tract-viewer/nougazounoatarashiibennkyoubonnver/</p>
+
+<h2>【結論】</h2>
+<p>個人DTI由来FA画像を標準白質路アトラスと個人T1強調MRIとの橋渡しに用いることで、標準白質路情報を個人T1画像上へ変形し、深層学習による脳領域分割結果と統合して可視化できた。本手法は個人の真のtractographyを再構成するものではないが、通常のT1強調MRI上で「白質路がどのあたりを走行するか」を理解するための教育用ガイドとして利用できる可能性がある。今後は複数例での再現性評価、atlas deformation単独法との比較、およびT1画像のみから白質路ガイドを推定するAIモデルとの比較を行う予定である。</p>
+
+<div class="footer">A2a FA-informed atlas deformation — proof-of-concept work summary</div>
+</body>
+</html>
