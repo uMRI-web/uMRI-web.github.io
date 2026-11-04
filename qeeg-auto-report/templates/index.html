@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>qEEG 自動レポート</title>
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f7fa;margin:0;color:#18202a}
+    main{max-width:720px;margin:8vh auto;background:white;padding:36px;border-radius:16px;box-shadow:0 10px 35px rgba(0,0,0,.08)}
+    h1{margin-top:0} label{display:block;margin:18px 0 8px;font-weight:700}
+    input[type=text],input[type=file]{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd3dc;border-radius:8px}
+    button{margin-top:24px;padding:12px 20px;border:0;border-radius:8px;background:#165d9c;color:white;font-weight:700;cursor:pointer}
+    .note{margin-top:24px;padding:14px;background:#eef5fb;border-radius:8px;font-size:.92rem;line-height:1.6}
+  </style>
+</head>
+<body><main>
+  <h1>qEEG 自動レポート</h1>
+  <p>NeurofaxからASCIIエクスポートした <code>.m00</code> を選択すると、Wordレポートを生成します。</p>
+  <form action="/analyze" method="post" enctype="multipart/form-data">
+    <label>m00ファイル</label><input type="file" name="file" accept=".m00" required>
+    <label>インプット名</label><input type="text" name="input_name" placeholder="例：テスト001">
+    <button type="submit">解析してWordを作成</button>
+  </form>
+  <div class="note">この試作版はローカルPC上だけで処理します。入力した脳波データを外部サーバーへ送信しません。</div>
+</main></body></html>
