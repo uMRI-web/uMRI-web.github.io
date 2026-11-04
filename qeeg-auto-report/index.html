@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>qEEG 自動レポート | uMRI</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;color:#16202a;background:#f3f6f9}
+*{box-sizing:border-box} body{margin:0}.wrap{max-width:860px;margin:0 auto;padding:40px 20px 72px}.card{background:#fff;border-radius:18px;padding:34px;box-shadow:0 12px 36px rgba(0,0,0,.08)}
+h1{margin:0 0 8px;font-size:clamp(28px,4vw,42px)}.sub{color:#5b6774;line-height:1.7;margin-top:0}.badge{display:inline-block;background:#e8f4ff;color:#0b5c94;border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px;margin-bottom:16px}
+label{display:block;font-weight:700;margin:22px 0 8px}.drop{border:2px dashed #9db2c6;border-radius:14px;padding:28px;text-align:center;background:#f8fbfd;transition:.2s}.drop.drag{border-color:#1769aa;background:#eef7ff}.drop input{max-width:100%}
+input[type=text]{width:100%;padding:12px 14px;border:1px solid #c9d2dc;border-radius:10px;font-size:16px}.row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.btn{border:0;border-radius:10px;padding:13px 18px;font-weight:800;font-size:16px;cursor:pointer;background:#1769aa;color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{margin-top:22px;padding:14px 16px;border-radius:10px;background:#eef3f7;line-height:1.6;white-space:pre-wrap}.ok{background:#eaf7ee}.err{background:#fdeeee;color:#8a1c1c}.privacy{margin-top:24px;border-left:4px solid #2a7c52;background:#f0faf4;padding:14px 16px;line-height:1.7}.small{font-size:13px;color:#64707c;line-height:1.65}.footer{margin-top:20px;color:#707b86;font-size:13px}
+code{background:#eef1f4;padding:2px 5px;border-radius:5px}
+</style>
+</head>
+<body><div class="wrap"><div class="card">
+<div class="badge">uMRI / browser-local prototype</div>
+<h1>qEEG 自動レポート</h1>
+<p class="sub">日本光電 Neurofax EEG-1200 / EEG-1290 からASCII形式でエクスポートした <code>.m00</code> を解析し、Wordレポートを生成します。</p>
+<div class="privacy"><strong>データは外部サーバーへ送信しません。</strong><br>解析はこのページを開いているPCのブラウザ内だけで実行されます。GitHubにも患者データは保存されません。</div>
+<label>m00ファイル</label>
+<div class="drop" id="drop"><input id="file" type="file" accept=".m00"></div>
+<div class="row"><div><label>インプット名</label><input id="inputName" type="text" placeholder="例：case0001"></div><button id="run" class="btn" disabled>解析してWordを作成</button></div>
+<div id="status" class="status">解析エンジンを準備しています…</div>
+<p class="small">既存解析の信号処理・Z-score表示値を94例で検証した互換実装です。Fp1=左、Fp2=右として左右表記を修正し、トポグラフィーは各帯域の正しいZ-scoreを使用します。研究・検証用であり、診断を自動確定するものではありません。</p>
+<div class="footer">初回はPython / NumPy / SciPy / Matplotlib等をブラウザに読み込むため時間がかかることがあります。</div>
+</div></div>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.29.5/full/pyodide.js"></script>
+<script src="./app.js"></script>
+</body></html>
