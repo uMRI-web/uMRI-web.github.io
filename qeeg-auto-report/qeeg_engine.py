@@ -147,6 +147,116 @@ def fmt2(x):
 def fmt3g(x):
     return f"{float(x):.3g}"
 
+
+REGIONS = [
+    ("前頭部", ["Fp1","Fp2","F7","F8"]),
+    ("中心部", ["C3","C4"]),
+    ("側頭部", ["T3","T4","T5","T6"]),
+    ("後頭部", ["O1","O2"]),
+]
+
+def _zlabel(z):
+    return f"{z:+.2f}"
+
+def _band_finding(results, band):
+    high=[(e,results[e]["z"][band]) for e in ELECTRODES if results[e]["z"][band] >= 2.0]
+    low=[(e,results[e]["z"][band]) for e in ELECTRODES if results[e]["z"][band] <= -2.0]
+    name=JP_BAND[band]
+    parts=[]
+    if high:
+        items="、".join([f"{e}（Z={_zlabel(z)}）" for e,z in high])
+        parts.append(f"{items}で正常参照群より2SD以上の高値")
+    if low:
+        items="、".join([f"{e}（Z={_zlabel(z)}）" for e,z in low])
+        parts.append(f"{items}で正常参照群より2SD以上の低値")
+    if not parts:
+        return f"{name}帯域：|Z|≧2の明らかな定量的偏位を認めません。"
+    return f"{name}帯域：" + "、".join(parts) + "を認めます。"
+
+def _region_phrase(electrodes):
+    labels=[]
+    remaining=set(electrodes)
+    for region, members in REGIONS:
+        hit=[e for e in members if e in remaining]
+        if len(hit) >= 2:
+            labels.append(f"{region}（{'・'.join(hit)}）")
+            remaining.difference_update(hit)
+    labels.extend([e for e in ELECTRODES if e in remaining])
+    return "、".join(labels)
+
+def _impression(results, frontal):
+    pieces=[]
+    for band in ("theta","alpha","beta"):
+        high=[e for e in ELECTRODES if results[e]["z"][band] >= 2.0]
+        low=[e for e in ELECTRODES if results[e]["z"][band] <= -2.0]
+        if high:
+            pieces.append(f"{JP_BAND[band]}帯域の{_region_phrase(high)}で相対パワー高値")
+        if low:
+            pieces.append(f"{JP_BAND[band]}帯域の{_region_phrase(low)}で相対パワー低値")
+
+    if abs(frontal["z_alpha_rel_diff"]) >= 2.0:
+        direction="右優位" if frontal["z_alpha_rel_diff"] > 0 else "左優位"
+        pieces.append(f"前頭部α相対パワー左右差の偏位（{direction}）")
+    if abs(frontal["zbd"]) >= 2.0:
+        direction="右高値" if frontal["zbd"] > 0 else "左高値"
+        pieces.append(f"前頭部β/θ比左右差の偏位（{direction}）")
+    if abs(frontal["zb1"]) >= 2.0:
+        pieces.append("左前頭部β/θ比の基準範囲からの偏位")
+    if abs(frontal["zb2"]) >= 2.0:
+        pieces.append("右前頭部β/θ比の基準範囲からの偏位")
+
+    if not pieces:
+        return "今回評価したθ・α・β帯域の相対パワーおよび前頭部左右差・β/θ比について、正常参照群から2SD以上の明らかな定量的偏位を認めません。"
+    return "qEEG定量解析では、" + "、".join(pieces) + "を認めます。"
+
+def add_interpretation_report(doc, results, frontal, sf):
+    doc.add_page_break()
+    doc.add_heading("定量解析所見（自動生成・医師確認前）", level=2)
+
+    doc.add_heading("1. 記録・解析条件", level=3)
+    doc.add_paragraph(
+        f"日本光電 Neurofax EEG-1290 / EEG-1200 Ver.06-01 からASCII形式で出力された12電極データを解析しました。"
+        f"A1は左耳朶、A2は右耳朶を基準電極とし、サンプリング周波数は{sf:g} Hzです。"
+        "Welch法（4秒窓）でパワースペクトル密度を算出し、θ 4–8 Hz、α 8–12 Hz、β 12–30 Hzを積分しました。"
+        "各帯域パワーをθ+α+βの合計で除した相対パワーについて、正常参照群との比較からZ-scoreを算出しています。"
+    )
+    doc.add_paragraph(
+        "本自動解析は入力された全記録を対象としており、個別の目視によるアーチファクト除去や、開眼・閉眼、覚醒度など記録条件の判定は行っていません。"
+    )
+
+    doc.add_heading("2. 主な定量所見", level=3)
+    for band in ("theta","alpha","beta"):
+        doc.add_paragraph(_band_finding(results, band))
+
+    doc.add_heading("3. 前頭部左右差・比率", level=3)
+    za=frontal["z_alpha_rel_diff"]
+    if abs(za) >= 2.0:
+        direction="右優位" if za > 0 else "左優位"
+        doc.add_paragraph(f"前頭部α相対パワー左右差はZ={_zlabel(za)}で、正常参照群から2SD以上の偏位（{direction}）を認めます。")
+    else:
+        doc.add_paragraph(f"前頭部α相対パワー左右差はZ={_zlabel(za)}で、2SD以上の明らかな偏位を認めません。")
+
+    doc.add_paragraph(
+        f"β/θ比は左 {fmt3g(frontal['b1'])}（Z={_zlabel(frontal['zb1'])}）、"
+        f"右 {fmt3g(frontal['b2'])}（Z={_zlabel(frontal['zb2'])}）です。"
+    )
+    zd=frontal["zbd"]
+    if abs(zd) >= 2.0:
+        direction="右高値" if zd > 0 else "左高値"
+        doc.add_paragraph(f"β/θ比の左右差（右−左）はZ={_zlabel(zd)}で、正常参照群から2SD以上の偏位（{direction}）を認めます。")
+    else:
+        doc.add_paragraph(f"β/θ比の左右差（右−左）はZ={_zlabel(zd)}で、2SD以上の明らかな偏位を認めません。")
+
+    doc.add_heading("4. Impression（まとめ）", level=3)
+    doc.add_paragraph(_impression(results, frontal))
+
+    doc.add_heading("5. Clinical correlation / 注意事項", level=3)
+    doc.add_paragraph(
+        "本所見は定量脳波解析に基づく記述的所見であり、単独で疾患の診断、病因の推定、治療適応の決定を行うものではありません。"
+        "脳波は薬剤、覚醒状態、眼球運動、筋電、体動、電極・環境ノイズ等の影響を受けるため、通常脳波の視察所見、臨床症状、診察所見、他の検査結果と併せて医師が総合的に判断してください。"
+    )
+    doc.add_paragraph("医師確認：________________________________")
+
 def generate_report(input_path,input_name,source_filename,output_path):
     results,frontal,sf=analyze(input_path)
     work="/tmp/qeeg_assets"
@@ -204,5 +314,6 @@ def generate_report(input_path,input_name,source_filename,output_path):
     doc.add_paragraph("シータ波帯域が4~8 [Hz]、アルファ波帯域が8~12 [Hz]、ベータ波帯域が12~30 [Hz]となっています。")
     for e in ELECTRODES:
         doc.add_picture(psds[e],width=Inches(3.5))
+    add_interpretation_report(doc,results,frontal,sf)
     doc.save(output_path)
     return output_path
