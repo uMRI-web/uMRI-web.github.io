@@ -209,6 +209,77 @@ def _impression(results, frontal):
         return "今回評価したθ・α・β帯域の相対パワーおよび前頭部左右差・β/θ比について、正常参照群から2SD以上の明らかな定量的偏位を認めません。"
     return "qEEG定量解析では、" + "、".join(pieces) + "を認めます。"
 
+
+def _arousal_metrics(results):
+    mean_rel = {
+        band: float(np.mean([results[e]["relative"][band] for e in ELECTRODES]))
+        for band in ("alpha","beta","theta")
+    }
+    eps = 1e-12
+    global_metrics = {
+        "engagement": mean_rel["beta"] / max(mean_rel["alpha"] + mean_rel["theta"], eps),
+        "beta_alpha": mean_rel["beta"] / max(mean_rel["alpha"], eps),
+        "beta_theta": mean_rel["beta"] / max(mean_rel["theta"], eps),
+    }
+    per_electrode = {}
+    for e in ELECTRODES:
+        r = results[e]["relative"]
+        per_electrode[e] = {
+            "engagement": r["beta"] / max(r["alpha"] + r["theta"], eps),
+            "beta_alpha": r["beta"] / max(r["alpha"], eps),
+            "beta_theta": r["beta"] / max(r["theta"], eps),
+        }
+    region_engagement = {}
+    for region, members in REGIONS:
+        region_engagement[region] = float(np.mean([per_electrode[e]["engagement"] for e in members]))
+    return mean_rel, global_metrics, per_electrode, region_engagement
+
+def add_arousal_profile(doc, results):
+    mean_rel, gm, per_electrode, region_engagement = _arousal_metrics(results)
+
+    doc.add_heading("5. qEEG覚醒度プロフィール（研究的参考指標）", level=3)
+    doc.add_paragraph(
+        "θ・α・βの3帯域から、覚醒・注意研究で用いられる比率指標を参考値として算出します。"
+        "本項目は記録全体の時間平均に基づく記述的プロフィールであり、意識障害・注意障害・低覚醒を診断する指標ではありません。"
+    )
+    doc.add_paragraph(
+        f"12電極平均の相対パワーは、α {mean_rel['alpha']:.2f}、β {mean_rel['beta']:.2f}、θ {mean_rel['theta']:.2f} です。"
+    )
+    doc.add_paragraph(
+        f"Engagement Index［β/(α+θ)］：{gm['engagement']:.2f}"
+    )
+    doc.add_paragraph(
+        f"β/α比：{gm['beta_alpha']:.2f}"
+    )
+    doc.add_paragraph(
+        f"β/θ比：{gm['beta_theta']:.2f}"
+    )
+
+    doc.add_paragraph(
+        "領域別Engagement Index（本記録内の参考値）："
+        + "、".join([f"{region} {region_engagement[region]:.2f}" for region, _ in REGIONS])
+        + "。"
+    )
+
+    table = doc.add_table(rows=1, cols=4)
+    table.style = "Table Grid"
+    hdr = table.rows[0].cells
+    hdr[0].text = "電極"
+    hdr[1].text = "β/(α+θ)"
+    hdr[2].text = "β/α"
+    hdr[3].text = "β/θ"
+    for e in ELECTRODES:
+        row = table.add_row().cells
+        row[0].text = e
+        row[1].text = f"{per_electrode[e]['engagement']:.2f}"
+        row[2].text = f"{per_electrode[e]['beta_alpha']:.2f}"
+        row[3].text = f"{per_electrode[e]['beta_theta']:.2f}"
+
+    doc.add_paragraph(
+        "現時点では本システムに、これら3指標について年齢等を調整した正常参照値や臨床カットオフは設定していません。"
+        "したがって数値の高低のみから覚醒度や注意機能の正常・異常を判定せず、眠気、開閉眼、薬剤、覚醒状態、アーチファクト、臨床所見と併せて解釈してください。"
+    )
+
 def add_interpretation_report(doc, results, frontal, sf):
     doc.add_page_break()
     doc.add_heading("定量解析所見（自動生成・医師確認前）", level=2)
@@ -250,7 +321,9 @@ def add_interpretation_report(doc, results, frontal, sf):
     doc.add_heading("4. Impression（まとめ）", level=3)
     doc.add_paragraph(_impression(results, frontal))
 
-    doc.add_heading("5. Clinical correlation / 注意事項", level=3)
+    add_arousal_profile(doc, results)
+
+    doc.add_heading("6. Clinical correlation / 注意事項", level=3)
     doc.add_paragraph(
         "本所見は定量脳波解析に基づく記述的所見であり、単独で疾患の診断、病因の推定、治療適応の決定を行うものではありません。"
         "脳波は薬剤、覚醒状態、眼球運動、筋電、体動、電極・環境ノイズ等の影響を受けるため、通常脳波の視察所見、臨床症状、診察所見、他の検査結果と併せて医師が総合的に判断してください。"
