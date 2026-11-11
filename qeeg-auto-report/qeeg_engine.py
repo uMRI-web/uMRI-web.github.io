@@ -451,3 +451,187 @@ def generate_report(input_path,input_name,source_filename,output_path):
     add_interpretation_report(doc,results,frontal,sf)
     doc.save(output_path)
     return output_path
+
+
+def _pdf_set_font(pdf, size=10):
+    pdf.set_font("NotoJP", size=size)
+
+def _pdf_heading(pdf, text, level=1):
+    sizes = {1: 18, 2: 14, 3: 11}
+    pdf.ln(2 if level > 1 else 0)
+    _pdf_set_font(pdf, sizes.get(level, 11))
+    pdf.multi_cell(0, 7 if level < 3 else 6, text, wrapmode="CHAR")
+    pdf.ln(1)
+
+def _pdf_para(pdf, text, size=9, h=5):
+    _pdf_set_font(pdf, size)
+    pdf.multi_cell(0, h, str(text), wrapmode="CHAR")
+    pdf.ln(1)
+
+def _pdf_metric_table(pdf, rows):
+    widths = [55, 25, 25, 75]
+    headers = ["指標", "値", "Z-score", "簡単な意味"]
+    _pdf_set_font(pdf, 8)
+    for w, header in zip(widths, headers):
+        pdf.cell(w, 7, header, border=1)
+    pdf.ln()
+    for label, value, z, meaning in rows:
+        y0 = pdf.get_y()
+        x0 = pdf.get_x()
+        texts = [label, value, z, meaning]
+        line_counts = []
+        for w, txt in zip(widths, texts):
+            lines = pdf.multi_cell(w, 4, txt, dry_run=True, output="LINES", wrapmode="CHAR")
+            line_counts.append(max(1, len(lines)))
+        row_h = max(line_counts) * 4 + 2
+        if pdf.get_y() + row_h > pdf.h - 15:
+            pdf.add_page()
+            _pdf_set_font(pdf, 8)
+            for w, header in zip(widths, headers):
+                pdf.cell(w, 7, header, border=1)
+            pdf.ln()
+            y0 = pdf.get_y()
+            x0 = pdf.get_x()
+        x = x0
+        for w, txt in zip(widths, texts):
+            pdf.set_xy(x, y0)
+            pdf.multi_cell(w, 4, txt, border=1, wrapmode="CHAR", max_line_height=4)
+            x += w
+        pdf.set_xy(x0, y0 + row_h)
+
+def _prepare_pdf_assets(results, work):
+    os.makedirs(work, exist_ok=True)
+    tops = {}
+    for band in ("theta", "alpha", "beta"):
+        p = f"{work}/{band}.png"
+        save_topomap(results, band, p)
+        tops[band] = p
+    psds = {}
+    for e in ELECTRODES:
+        p = f"{work}/psd_{e}.png"
+        save_psd(results, e, p)
+        psds[e] = p
+    return tops, psds
+
+def generate_pdf(input_path, input_name, source_filename, output_path, font_path):
+    from fpdf import FPDF
+
+    results, frontal, sf = analyze(input_path)
+    work = "/tmp/qeeg_pdf_assets"
+    tops, psds = _prepare_pdf_assets(results, work)
+
+    pdf = FPDF(format="A4")
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(15, 14, 15)
+    pdf.add_font("NotoJP", fname=font_path)
+
+    pdf.add_page()
+    _pdf_heading(pdf, "脳波の解析結果", 1)
+    _pdf_para(pdf, "作成日：" + datetime.now().strftime("%Y年%m月%d日"), 10)
+    _pdf_para(pdf, "ファイル名：" + source_filename, 10)
+    _pdf_para(pdf, "インプット名：" + input_name, 10)
+
+    _pdf_heading(pdf, "脳波トポグラフィー", 2)
+    _pdf_para(pdf, "各時刻、各電極計12箇所における脳波を周波数毎（シータ波・アルファ波・ベータ波として分類）に分析し、脳波トポグラフィーを描画します。")
+    _pdf_heading(pdf, "シータ波の分布", 3)
+    pdf.image(tops["theta"], w=105)
+
+    pdf.add_page()
+    _pdf_heading(pdf, "アルファ波の分布", 3)
+    pdf.image(tops["alpha"], w=92)
+    _pdf_heading(pdf, "ベータ波の分布", 3)
+    pdf.image(tops["beta"], w=92)
+
+    pdf.add_page()
+    _pdf_heading(pdf, "Zスコア（標準得点）の算出", 2)
+    _pdf_para(pdf, "正常被験者1297人の脳波データを基準として入力ファイルのZスコアを算出します。")
+    _pdf_para(pdf, "Zスコアは、入力データと正常なデータ群の平均値との差を正常なデータ群の標準偏差で除したもので、入力データがどれだけ正常なデータから外れているかを示す指標の一つです。")
+    _pdf_para(pdf, "例えば、Z値が+1であるならデータセットの分布から標準偏差1つ分だけ外れている事を示します。")
+    for e in ELECTRODES:
+        vals = []
+        for band in ("alpha", "beta", "theta"):
+            vals.append(f"{JP_BAND[band]} {fmt2(results[e]['z'][band])}")
+        _pdf_para(pdf, f"{e}電極： " + " / ".join(vals), 9, 5)
+
+    _pdf_heading(pdf, "前頭葉の左右差の分析", 2)
+    _pdf_para(pdf, "前頭葉のアルファ波の左右差やそのZスコア、前頭葉のベータ波とシータ波の比率やそのZスコアが様々な症例と相関性のある事が近年の論文によって示されています。")
+    f = frontal
+    _pdf_para(pdf, "前頭葉のアルファ波左右差の値は" + fmt3g(f["alpha_abs_diff"]) + "です。")
+    _pdf_para(pdf, "前頭葉のアルファ波左右差の相対パワースペクトルのZスコアは" + fmt3g(f["z_alpha_rel_diff"]) + "です。")
+    _pdf_para(pdf, "前頭葉（左）のベータ波/シータ波の比率は" + fmt3g(f["b1"]) + "です。")
+    _pdf_para(pdf, "前頭葉（右）のベータ波/シータ波の比率は" + fmt3g(f["b2"]) + "です。")
+    _pdf_para(pdf, "前頭葉（左）のベータ波/シータ波のZスコアは" + fmt3g(f["zb1"]) + "です。")
+    _pdf_para(pdf, "前頭葉（右）のベータ波/シータ波のZスコアは" + fmt3g(f["zb2"]) + "です。")
+    _pdf_para(pdf, "前頭葉のベータ波/シータ波の左右差（右−左）は" + fmt3g(f["bd"]) + "です。")
+    _pdf_para(pdf, "前頭葉のベータ波/シータ波の左右差（右−左）のZスコアは" + fmt3g(f["zbd"]) + "です。")
+
+    pdf.add_page()
+    _pdf_heading(pdf, "パワースペクトル密度の周波数依存性", 2)
+    _pdf_para(pdf, "周波数解析した各電極におけるパワースペクトル密度の周波数依存性を描画します。")
+    _pdf_para(pdf, "シータ波帯域が4~8 [Hz]、アルファ波帯域が8~12 [Hz]、ベータ波帯域が12~30 [Hz]となっています。")
+    for idx, e in enumerate(ELECTRODES):
+        if idx > 0 and idx % 3 == 0:
+            pdf.add_page()
+        _pdf_set_font(pdf, 9)
+        pdf.cell(0, 5, e, new_x="LMARGIN", new_y="NEXT")
+        pdf.image(psds[e], w=112)
+        pdf.ln(2)
+
+    pdf.add_page()
+    _pdf_heading(pdf, "定量解析所見（自動生成・医師確認前）", 2)
+    _pdf_heading(pdf, "1. 記録・解析条件", 3)
+    _pdf_para(
+        pdf,
+        f"日本光電 Neurofax EEG-1290 / EEG-1200 Ver.06-01 からASCII形式で出力された12電極データを解析しました。"
+        f"A1は左耳朶、A2は右耳朶を基準電極とし、サンプリング周波数は{sf:g} Hzです。"
+        "Welch法（4秒窓）でパワースペクトル密度を算出し、θ 4–8 Hz、α 8–12 Hz、β 12–30 Hzを積分しました。"
+        "各帯域パワーをθ+α+βの合計で除した相対パワーについて、正常参照群との比較からZ-scoreを算出しています。"
+    )
+    _pdf_para(pdf, "本自動解析は入力された全記録を対象としており、個別の目視によるアーチファクト除去や、開眼・閉眼、覚醒度など記録条件の判定は行っていません。")
+
+    _pdf_heading(pdf, "2. 主な定量所見", 3)
+    for band in ("theta", "alpha", "beta"):
+        _pdf_para(pdf, _band_finding(results, band))
+
+    _pdf_heading(pdf, "3. 前頭部左右差・比率", 3)
+    za = frontal["z_alpha_rel_diff"]
+    if abs(za) >= 2.0:
+        direction = "右優位" if za > 0 else "左優位"
+        _pdf_para(pdf, f"前頭部α相対パワー左右差はZ={_zlabel(za)}で、正常参照群から2SD以上の偏位（{direction}）を認めます。")
+    else:
+        _pdf_para(pdf, f"前頭部α相対パワー左右差はZ={_zlabel(za)}で、2SD以上の明らかな偏位を認めません。")
+    _pdf_para(pdf, f"β/θ比は左 {fmt3g(frontal['b1'])}（Z={_zlabel(frontal['zb1'])}）、右 {fmt3g(frontal['b2'])}（Z={_zlabel(frontal['zb2'])}）です。")
+    zd = frontal["zbd"]
+    if abs(zd) >= 2.0:
+        direction = "右高値" if zd > 0 else "左高値"
+        _pdf_para(pdf, f"β/θ比の左右差（右−左）はZ={_zlabel(zd)}で、正常参照群から2SD以上の偏位（{direction}）を認めます。")
+    else:
+        _pdf_para(pdf, f"β/θ比の左右差（右−左）はZ={_zlabel(zd)}で、2SD以上の明らかな偏位を認めません。")
+
+    _pdf_heading(pdf, "4. Impression（まとめ）", 3)
+    _pdf_para(pdf, _impression(results, frontal))
+
+    _pdf_heading(pdf, "5. qEEG覚醒度プロフィール（研究的参考指標）", 3)
+    mean_rel, gm, gz, per_electrode, region_engagement = _arousal_metrics(results)
+    _pdf_para(pdf, "θ・α・βの3帯域から、覚醒・注意研究で用いられる比率指標を参考値として算出します。本項目は記録全体の時間平均に基づく記述的プロフィールであり、意識障害・注意障害・低覚醒を診断する指標ではありません。")
+    _pdf_para(pdf, f"12電極平均の相対パワーは、α {mean_rel['alpha']:.2f}、β {mean_rel['beta']:.2f}、θ {mean_rel['theta']:.2f} です。")
+    metric_rows = []
+    for label, key in [
+        ("Engagement Index［β/(α+θ)］", "engagement"),
+        ("β/α比", "beta_alpha"),
+        ("β/θ比", "beta_theta"),
+    ]:
+        level, direction = _arousal_z_summary(key, gz[key])
+        metric_rows.append((label, f"{gm[key]:.2f}", f"{gz[key]:+.2f}", f"{level}。{direction}。"))
+    _pdf_metric_table(pdf, metric_rows)
+    pdf.ln(2)
+    _pdf_para(pdf, "Z-scoreは、正常1297例について同じ3指標を被験者ごとに再計算し、比率分布の歪みを抑えるためln(比率)を標準化して算出しています。目安として|Z|<1は正常参照中心付近、1≦|Z|<2はやや高値/低値、|Z|≧2は正常参照群から2SD以上の偏位として記述します。これらは研究的な記述基準であり、臨床診断のカットオフではありません。")
+    _pdf_para(pdf, "領域別Engagement Index（本記録内の参考値）：" + "、".join([f"{region} {region_engagement[region]:.2f}" for region, _ in REGIONS]) + "。")
+
+    _pdf_heading(pdf, "6. Clinical correlation / 注意事項", 3)
+    _pdf_para(pdf, "本所見は定量脳波解析に基づく記述的所見であり、単独で疾患の診断、病因の推定、治療適応の決定を行うものではありません。脳波は薬剤、覚醒状態、眼球運動、筋電、体動、電極・環境ノイズ等の影響を受けるため、通常脳波の視察所見、臨床症状、診察所見、他の検査結果と併せて医師が総合的に判断してください。")
+    _pdf_para(pdf, "本Z-scoreは正常1297例の同一データセットを参照していますが、年齢・性別等で層別化した参照値ではなく、臨床診断用のカットオフも設定していません。")
+    _pdf_para(pdf, "医師確認：________________________________")
+
+    pdf.output(output_path)
+    return output_path
