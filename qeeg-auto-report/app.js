@@ -21,7 +21,7 @@ async function boot(){
     setStatus("解析エンジンを読み込んでいます…\n2/4 NumPy / SciPy / Matplotlibを準備中");
     await pyodide.loadPackage(["numpy","scipy","matplotlib","micropip","lxml"]);
     setStatus("解析エンジンを読み込んでいます…\n3/4 Word / PDF生成機能を準備中");
-    await pyodide.runPythonAsync('import micropip\nawait micropip.install(["python-docx==1.2.0","fpdf2==2.8.4"])');
+    await pyodide.runPythonAsync(`import micropip\nawait micropip.install(["python-docx==1.2.0","fpdf2==2.8.4"])`);
     setStatus("解析エンジンを読み込んでいます…\n4/4 日本語PDFフォントを準備中");
     const fontResp = await fetch("https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf");
     if(!fontResp.ok) throw new Error("日本語PDFフォントを取得できませんでした");
