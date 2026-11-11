@@ -37,6 +37,12 @@ FRONTAL = {
 "beta_theta_fp2": (1.5909449831566282, 3.2237316700187293),
 "beta_theta_diff": (0.008384242169726068, 1.7684331334725822)
 }
+
+AROUSAL_LOG_NORMS = {
+    "engagement": (-0.5984949908847829, 0.5963525845329974),
+    "beta_alpha": (0.14842213936547802, 0.6396238899580362),
+    "beta_theta": (0.14613442394347512, 0.7023160536412164),
+}
 CH_POS = {
 "Fp1":(1.5,4.2),"Fp2":(2.5,4.2),"C3":(0.95,2.0),"C4":(3.05,2.0),
 "O1":(1.5,0.0),"O2":(2.5,0.0),"T3":(-0.1,2.0),"T4":(4.1,2.0),
@@ -229,13 +235,52 @@ def _arousal_metrics(results):
             "beta_alpha": r["beta"] / max(r["alpha"], eps),
             "beta_theta": r["beta"] / max(r["theta"], eps),
         }
+    z_metrics = {
+        key: zscore(float(np.log(value)), *AROUSAL_LOG_NORMS[key])
+        for key, value in global_metrics.items()
+    }
     region_engagement = {}
     for region, members in REGIONS:
         region_engagement[region] = float(np.mean([per_electrode[e]["engagement"] for e in members]))
-    return mean_rel, global_metrics, per_electrode, region_engagement
+    return mean_rel, global_metrics, z_metrics, per_electrode, region_engagement
+
+def _arousal_z_summary(metric, z):
+    if z >= 2.0:
+        level = "高値（正常参照群より2SD以上）"
+    elif z >= 1.0:
+        level = "やや高値"
+    elif z <= -2.0:
+        level = "低値（正常参照群より2SD以上）"
+    elif z <= -1.0:
+        level = "やや低値"
+    else:
+        level = "正常参照中心付近"
+
+    if metric == "engagement":
+        direction = (
+            "βがα+θに対して相対的に優位で、課題関与・覚醒が高い方向"
+            if z > 0 else
+            "α+θがβに対して相対的に優位で、課題関与・覚醒が低い方向"
+        )
+    elif metric == "beta_alpha":
+        direction = (
+            "βがαに対して相対的に優位で、活動性・覚醒が高い方向"
+            if z > 0 else
+            "αがβに対して相対的に優位で、安静・低覚醒側の方向"
+        )
+    else:
+        direction = (
+            "βがθに対して相対的に優位で、注意・活性化が高い方向"
+            if z > 0 else
+            "θがβに対して相対的に優位で、注意・活性化が低い方向"
+        )
+
+    if abs(z) < 0.25:
+        direction = "正常参照群の中心に近く、明らかな方向性を示しません"
+    return level, direction
 
 def add_arousal_profile(doc, results):
-    mean_rel, gm, per_electrode, region_engagement = _arousal_metrics(results)
+    mean_rel, gm, gz, per_electrode, region_engagement = _arousal_metrics(results)
 
     doc.add_heading("5. qEEG覚醒度プロフィール（研究的参考指標）", level=3)
     doc.add_paragraph(
@@ -245,14 +290,30 @@ def add_arousal_profile(doc, results):
     doc.add_paragraph(
         f"12電極平均の相対パワーは、α {mean_rel['alpha']:.2f}、β {mean_rel['beta']:.2f}、θ {mean_rel['theta']:.2f} です。"
     )
+    metric_rows = [
+        ("Engagement Index［β/(α+θ)］", "engagement"),
+        ("β/α比", "beta_alpha"),
+        ("β/θ比", "beta_theta"),
+    ]
+    table_global = doc.add_table(rows=1, cols=4)
+    table_global.style = "Table Grid"
+    hdr = table_global.rows[0].cells
+    hdr[0].text = "指標"
+    hdr[1].text = "値"
+    hdr[2].text = "Z-score"
+    hdr[3].text = "簡単な意味"
+    for label, key in metric_rows:
+        level, direction = _arousal_z_summary(key, gz[key])
+        row = table_global.add_row().cells
+        row[0].text = label
+        row[1].text = f"{gm[key]:.2f}"
+        row[2].text = f"{gz[key]:+.2f}"
+        row[3].text = f"{level}。{direction}。"
+
     doc.add_paragraph(
-        f"Engagement Index［β/(α+θ)］：{gm['engagement']:.2f}"
-    )
-    doc.add_paragraph(
-        f"β/α比：{gm['beta_alpha']:.2f}"
-    )
-    doc.add_paragraph(
-        f"β/θ比：{gm['beta_theta']:.2f}"
+        "Z-scoreは、正常1297例について同じ3指標を被験者ごとに再計算し、比率分布の歪みを抑えるためln(比率)を標準化して算出しています。"
+        "目安として|Z|<1は正常参照中心付近、1≦|Z|<2はやや高値/低値、|Z|≧2は正常参照群から2SD以上の偏位として記述します。"
+        "これらは研究的な記述基準であり、臨床診断のカットオフではありません。"
     )
 
     doc.add_paragraph(
@@ -276,7 +337,7 @@ def add_arousal_profile(doc, results):
         row[3].text = f"{per_electrode[e]['beta_theta']:.2f}"
 
     doc.add_paragraph(
-        "現時点では本システムに、これら3指標について年齢等を調整した正常参照値や臨床カットオフは設定していません。"
+        "本Z-scoreは正常1297例の同一データセットを参照していますが、年齢・性別等で層別化した参照値ではなく、臨床診断用のカットオフも設定していません。"
         "したがって数値の高低のみから覚醒度や注意機能の正常・異常を判定せず、眠気、開閉眼、薬剤、覚醒状態、アーチファクト、臨床所見と併せて解釈してください。"
     )
 
