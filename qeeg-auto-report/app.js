@@ -16,9 +16,9 @@ function refreshButton(){ runBtn.disabled = !(engineReady && fileEl.files && fil
 
 async function boot(){
   try{
-    setStatus("解析エンジンを読み込んでいます…\n1/3 Python環境を準備中");
+    setStatus("解析エンジンを読み込んでいます…\n1/4 Python環境を準備中");
     pyodide = await loadPyodide({indexURL: PYODIDE_BASE});
-    setStatus("解析エンジンを読み込んでいます…\n2/3 NumPy / SciPy / Matplotlibを準備中");
+    setStatus("解析エンジンを読み込んでいます…\n2/4 NumPy / SciPy / Matplotlibを準備中");
     await pyodide.loadPackage(["numpy","scipy","matplotlib","micropip","lxml"]);
     setStatus("解析エンジンを読み込んでいます…\n3/4 Word / PDF生成機能を準備中");
     await pyodide.runPythonAsync('import micropip\nawait micropip.install(["python-docx==1.2.0","fpdf2==2.8.4"])');
