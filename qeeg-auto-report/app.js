@@ -23,10 +23,10 @@ async function boot(){
     setStatus("解析エンジンを読み込んでいます…\n3/4 Word / PDF生成機能を準備中");
     await pyodide.runPythonAsync(`import micropip\nawait micropip.install(["python-docx==1.2.0","fpdf2==2.8.4"])`);
     setStatus("解析エンジンを読み込んでいます…\n4/4 日本語PDFフォントを準備中");
-    const fontResp = await fetch("https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf");
+    const fontResp = await fetch("https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/SubsetOTF/JP/NotoSansJP-Regular.otf");
     if(!fontResp.ok) throw new Error("日本語PDFフォントを取得できませんでした");
     const fontBytes = new Uint8Array(await fontResp.arrayBuffer());
-    pyodide.FS.writeFile("/tmp/NotoSansJP.ttf", fontBytes);
+    pyodide.FS.writeFile("/tmp/NotoSansJP-Regular.otf", fontBytes);
     const resp = await fetch("./qeeg_engine.py", {cache:"no-store"});
     if(!resp.ok) throw new Error("解析コードを取得できませんでした");
     const code = await resp.text();
@@ -80,7 +80,7 @@ runBtn.addEventListener("click", async ()=>{
         file.name.replace(/\.m00$/i,"")+"_脳波解析結果.docx");
       setStatus("完了しました。Wordファイルを保存しました。","ok");
     }else if(format === "pdf"){
-      await pyodide.runPythonAsync('generate_pdf("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.pdf", "/tmp/NotoSansJP.ttf")');
+      await pyodide.runPythonAsync('generate_pdf("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.pdf", "/tmp/NotoSansJP-Regular.otf")');
       downloadBytes(pyodide.FS.readFile("/tmp/output.pdf"),
         "application/pdf",
         file.name.replace(/\.m00$/i,"")+"_脳波解析結果.pdf");
@@ -88,7 +88,7 @@ runBtn.addEventListener("click", async ()=>{
     }else{
       await pyodide.runPythonAsync(`
 generate_report("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.docx")
-generate_pdf("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.pdf", "/tmp/NotoSansJP.ttf")
+generate_pdf("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.pdf", "/tmp/NotoSansJP-Regular.otf")
 import zipfile
 with zipfile.ZipFile("/tmp/output_bundle.zip","w",zipfile.ZIP_DEFLATED) as z:
     z.write("/tmp/output.docx", arcname="report.docx")
