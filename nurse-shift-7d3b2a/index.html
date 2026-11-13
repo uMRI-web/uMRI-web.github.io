@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet" />
+  <title>Nurse Shift Solver | 回復期リハ病棟</title>
+  <style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#172033;--muted:#667085;--line:#e3e8ef;--primary:#2463eb;--ok:#087f5b;--warn:#b25e09;--bad:#c92a2a;--pink:#d63384}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink)}
+.topbar{padding:26px clamp(18px,5vw,64px);background:#111827;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;gap:24px}.topbar h1{margin:4px 0 8px;font-size:clamp(23px,3vw,36px)}.lead{margin:0;color:#d1d5db}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#93c5fd}.privacy{font-size:12px;border:1px solid #475569;border-radius:999px;padding:7px 10px;white-space:nowrap}
+main{max-width:1500px;margin:22px auto;padding:0 18px 50px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(16,24,40,.04);margin-bottom:18px}.control-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:14px}.control-grid label{font-weight:700;font-size:14px}.control-grid input,.control-grid select{display:block;width:100%;margin-top:7px;padding:10px;border:1px solid #cfd6df;border-radius:9px;background:#fff;font-size:15px}.control-grid small{display:block;font-weight:400;color:var(--muted);margin-top:5px;line-height:1.4}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}button{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}button:disabled{opacity:.45;cursor:not-allowed}.notice{margin-top:14px;background:#f8fafc;border-left:4px solid #64748b;padding:11px 13px;border-radius:7px;font-size:14px}
+.status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.status-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:15px}.status-card .k{font-size:12px;color:var(--muted)}.status-card .v{font-size:22px;font-weight:800;margin-top:4px}.status-card.ok .v{color:var(--ok)}.status-card.pending .v{color:var(--warn)}
+.section-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.section-head h2,.panel h2{margin:0 0 8px;font-size:18px}.muted{color:var(--muted)}.small{font-size:13px}.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px}.tag{display:inline-flex;min-width:24px;height:24px;align-items:center;justify-content:center;border-radius:6px;margin-right:3px}.day{background:#e8f0ff;color:#1d4ed8}.night{background:#ffe8ec;color:#c2255c}.after{background:#f3e8ff;color:#7e22ce}.off{background:#eef2f6;color:#475569}.half{background:#fff4cc;color:#8a5d00}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:14px;max-height:70vh}.table-wrap table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12px}.table-wrap th,.table-wrap td{border-right:1px solid #edf0f3;border-bottom:1px solid #edf0f3;text-align:center;padding:7px 6px;min-width:42px;white-space:nowrap}.table-wrap th{position:sticky;top:0;background:#f8fafc;z-index:2}.table-wrap th.name,.table-wrap td.name{position:sticky;left:0;z-index:3;text-align:left;min-width:120px;background:#fff}.table-wrap th.name{z-index:4;background:#f8fafc}.table-wrap td.role{min-width:78px;text-align:left;color:var(--muted)}.weekend{background:#fafafa}.sun{color:#c92a2a}.sat{color:#1d4ed8}.cell-D{background:#f7faff}.cell-N{background:#fff1f3;color:#c2255c;font-weight:800}.cell-A{background:#faf5ff;color:#7e22ce;font-weight:800}.cell-O{background:#f1f5f9;color:#475569;font-weight:800}.cell-H{background:#fff8db;color:#8a5d00;font-weight:800}.empty{padding:50px!important;color:var(--muted)}
+.two-col{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.check{display:grid;grid-template-columns:88px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #eef2f6}.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;text-align:center}.badge.pass{background:#dff7ee;color:#087f5b}.badge.pending{background:#fff2d9;color:#9a5700}.badge.fail{background:#ffe3e3;color:#c92a2a}.facts{margin:0}.facts div{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #eef2f6;padding:8px 0}.facts dt{color:var(--muted)}.facts dd{margin:0;font-weight:700;text-align:right}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:7px 10px;font-size:13px}.footnote{border-left:5px solid #f59f00}footer{text-align:center;color:#98a2b3;font-size:12px;padding:24px}
+@media(max-width:900px){.control-grid,.status-grid,.two-col{grid-template-columns:1fr 1fr}.topbar{flex-direction:column}}@media(max-width:600px){.control-grid,.status-grid,.two-col{grid-template-columns:1fr}.section-head{flex-direction:column}.privacy{display:none}}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">uMRI / Nurse Shift Solver</div>
+      <h1>回復期リハ病棟 シフト候補生成</h1>
+      <p class="lead">AI不使用。登録済み制約だけで候補勤務表を生成し、同じルールで再検証します。</p>
+    </div>
+    <div class="privacy">NOINDEX / マスク名のみ</div>
+  </header>
+
+  <main>
+    <section class="panel controls">
+      <div class="control-grid">
+        <label>対象年
+          <select id="year"></select>
+        </label>
+        <label>対象月
+          <select id="month"></select>
+        </label>
+        <label>公休クレジット目標
+          <input id="offTarget" type="number" min="0" max="20" step="0.5" />
+          <small>「公」=1.0、「半」=0.5。現在の院内運用に合わせて変更可能。</small>
+        </label>
+        <label>候補シード
+          <input id="seed" type="number" min="1" step="1" value="261213" />
+          <small>値を変えると別候補になります。</small>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="generateBtn" class="primary">🎲 シフト候補を作る</button>
+        <button id="rerollBtn">🎲 別の候補</button>
+        <button id="csvBtn" disabled>CSV出力</button>
+      </div>
+      <div class="notice">
+        <strong>初版の扱い：</strong> 希望休なし。常勤職員のみ自動編成します。非常勤は個別契約・固定曜日などが未取得のため自動編成しません。
+      </div>
+    </section>
+
+    <section class="status-grid" id="statusGrid"></section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>生成候補</h2>
+          <p id="candidateMeta" class="muted">まだ生成されていません。</p>
+        </div>
+        <div class="legend">
+          <span><b class="tag day">日</b> 日勤</span>
+          <span><b class="tag night">入</b> 夜勤入り</span>
+          <span><b class="tag after">明</b> 夜勤明け</span>
+          <span><b class="tag off">公</b> 公休</span>
+          <span><b class="tag half">半</b> 半日</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="scheduleTable"><tbody><tr><td class="empty">「シフト候補を作る」を押してください。</td></tr></tbody></table>
+      </div>
+    </section>
+
+    <section class="two-col">
+      <section class="panel">
+        <h2>検証結果</h2>
+        <div id="validation"></div>
+      </section>
+      <section class="panel">
+        <h2>現在登録している病棟情報</h2>
+        <dl class="facts">
+          <div><dt>病棟</dt><dd>回復期リハ病棟</dd></div>
+          <div><dt>病床数</dt><dd>31床</dd></div>
+          <div><dt>届出</dt><dd>回復期リハビリテーション病棟入院料4</dd></div>
+          <div><dt>看護配置</dt><dd>15対1</dd></div>
+          <div><dt>看護補助配置</dt><dd>30対1</dd></div>
+          <div><dt>日勤</dt><dd>8:45–17:30</dd></div>
+          <div><dt>夜勤</dt><dd>17:00–翌9:00（入→明）</dd></div>
+        </dl>
+        <p class="muted small">15:1 / 30:1 はMurseの届出設定として保持していますが、初版では様式9と同一の算定ロジックをまだ実装していないため「PASS」とは表示しません。</p>
+      </section>
+    </section>
+
+    <section class="panel">
+      <h2>非常勤：個別条件待ち</h2>
+      <p class="muted">以下は職員マスタに存在しますが、扶養・契約時間・曜日固定・夜勤可否が未確定のため、自動生成対象から除外しています。</p>
+      <div id="partTimers" class="chips"></div>
+    </section>
+
+    <section class="panel footnote">
+      <h2>この版で「遵守済み」と表示する範囲</h2>
+      <p>画面のPASSは、このプログラムに明示的に実装した制約に対する機械検証結果です。労基法上の正味労働時間、1か月単位の変形労働時間制、年休管理、非常勤個別契約、様式9の配置算定は未実装のためPENDINGとして分離しています。</p>
+    </section>
+  </main>
+
+  <footer>Prototype v0.2 — browser-only deterministic constraint generator / no AI</footer>
+  <script>
+"use strict";
+
+const STAFF = [
+  {id:"R01", name:"小〇 美〇", profession:"看護師", group:"nurse", employment:"常勤"},
+  {id:"R02", name:"渡〇 美〇", profession:"看護師", group:"nurse", employment:"常勤"},
+  {id:"R03", name:"木〇 茉〇恵", profession:"看護師", group:"nurse", employment:"常勤"},
+  {id:"R04", name:"福〇 鈴〇", profession:"看護師", group:"nurse", employment:"常勤"},
+  {id:"R05", name:"中〇 晶〇", profession:"准看護師", group:"nurse", employment:"常勤"},
+  {id:"R06", name:"山〇 ゆ〇子", profession:"看護助手", group:"aide", employment:"常勤"},
+  {id:"R07", name:"佐〇 妙〇", profession:"看護助手", group:"aide", employment:"常勤"},
+  {id:"R08", name:"片〇 友〇", profession:"看護助手", group:"aide", employment:"常勤"},
+  {id:"R09", name:"丸〇 登〇子", profession:"看護助手", group:"aide", employment:"常勤"},
+  {id:"R10", name:"大〇 〇", profession:"看護助手", group:"aide", employment:"常勤"},
+  {id:"P01", name:"荻〇 〇", profession:"看護師", group:"nurse", employment:"非常勤"},
+  {id:"P02", name:"村〇 亜〇", profession:"看護師", group:"nurse", employment:"非常勤"},
+  {id:"P03", name:"半〇 綾〇", profession:"看護師", group:"nurse", employment:"非常勤"},
+  {id:"P04", name:"今〇 孝〇", profession:"看護師", group:"nurse", employment:"非常勤"},
+  {id:"P05", name:"小〇 留〇子", profession:"准看護師", group:"nurse", employment:"非常勤"},
+  {id:"P06", name:"勝〇 千〇", profession:"准看護師", group:"nurse", employment:"非常勤"},
+  {id:"P07", name:"亀〇 真〇美", profession:"看護師", group:"nurse", employment:"非常勤"},
+];
+const SHIFT_LABEL = {D:"日", N:"入", A:"明", O:"公", H:"半"};
+let currentResult = null;
+function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;}}
+function shuffle(arr, rnd){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function daysInMonth(y,m){return new Date(y,m,0).getDate();}
+function dow(y,m,d){return new Date(y,m-1,d).getDay();}
+function isThirdSaturday(y,m,d){return dow(y,m,d)===6 && Math.ceil(d/7)===3;}
+function suggestedOffTarget(y,m){let sundays=0,saturdays=0,thirdSat=0;const n=daysInMonth(y,m);for(let d=1;d<=n;d++){const w=dow(y,m,d);if(w===0)sundays++;if(w===6){saturdays++;if(isThirdSaturday(y,m,d))thirdSat=1;}}const knownHolidayCounts={"2026-11":2,"2026-12":0,"2027-1":2,"2027-2":2,"2027-3":1,"2027-4":1,"2027-5":4,"2027-6":0,"2027-7":1,"2027-8":1,"2027-9":2,"2027-10":1,"2027-11":2,"2027-12":0};const h=knownHolidayCounts[`${y}-${m}`]??0;return Math.min(15,sundays+h+(saturdays*0.5)+(thirdSat?0.5:0));}
+function newMatrix(staff,n){const s={};staff.forEach(p=>s[p.id]=Array(n).fill("D"));return s;}
+function workRun(schedule){let max=0,run=0;for(const x of schedule){if(x==="O"||x==="A"){run=0;}else{run++;max=Math.max(max,run);}}return max;}
+function offCredit(schedule){return schedule.reduce((a,x)=>a+(x==="O"?1:x==="H"?.5:0),0);}
+function countShift(schedule,shift){return schedule.filter(x=>x===shift).length;}
+function assignNights(matrix,pool,n,rnd){const order=shuffle(pool,rnd);let carryOut=[];for(let d=0;d<n;d++){let cand=order.filter(p=>matrix[p.id][d]==="D"&&(d===0||matrix[p.id][d-1]!=="N"));cand=shuffle(cand,rnd).sort((a,b)=>countShift(matrix[a.id],"N")-countShift(matrix[b.id],"N"));const p=cand[0];if(!p)return{ok:false};matrix[p.id][d]="N";if(d+1<n){matrix[p.id][d+1]="A";if(d+2<n&&matrix[p.id][d+2]==="D")matrix[p.id][d+2]="O";}else carryOut.push(p.id);}return{ok:true,carryOut};}
+function addOffCredits(matrix,pool,target,n,rnd){for(const p of pool){let credit=offCredit(matrix[p.id]),guard=0;while(credit+1e-9<target&&guard++<200){const desired=target-credit>=1?"O":"H";let choices=[];for(let d=0;d<n;d++){if(matrix[p.id][d]!=="D")continue;const group=pool.filter(q=>q.group===p.group);const dayWorkers=group.filter(q=>["D","H"].includes(matrix[q.id][d])).length;if(dayWorkers<=1)continue;choices.push(d);}if(!choices.length)return false;choices=shuffle(choices,rnd).sort((a,b)=>pool.filter(q=>matrix[q.id][a]==="O").length-pool.filter(q=>matrix[q.id][b]==="O").length);matrix[p.id][choices[0]]=desired;credit=offCredit(matrix[p.id]);}if(Math.abs(credit-target)>.001)return false;}return true;}
+function generate(y,m,target,seed){const regular=STAFF.filter(s=>s.employment==="常勤"),nurses=regular.filter(s=>s.group==="nurse"),aides=regular.filter(s=>s.group==="aide"),n=daysInMonth(y,m);for(let attempt=0;attempt<80;attempt++){const rnd=mulberry32(seed+attempt*7919),matrix=newMatrix(regular,n),n1=assignNights(matrix,nurses,n,rnd);if(!n1.ok)continue;const n2=assignNights(matrix,aides,n,rnd);if(!n2.ok)continue;if(!addOffCredits(matrix,regular,target,n,rnd))continue;const validation=validate(matrix,regular,n,target);if(validation.hardFail===0)return{matrix,regular,n,validation,seed:seed+attempt*7919};}throw new Error("現在の制約では候補を生成できませんでした。公休目標を下げるか、個別条件の登録後に再試行してください。");}
+function validate(matrix,staff,n,target){const checks=[];let hardFail=0;const nurses=staff.filter(s=>s.group==="nurse"),aides=staff.filter(s=>s.group==="aide");let coverageOK=true,sequenceOK=true,offOK=true,runOK=true,dayGuardOK=true;for(let d=0;d<n;d++){if(nurses.filter(p=>matrix[p.id][d]==="N").length<1)coverageOK=false;if(aides.filter(p=>matrix[p.id][d]==="N").length<1)coverageOK=false;if(nurses.filter(p=>["D","H"].includes(matrix[p.id][d])).length<1)dayGuardOK=false;if(aides.filter(p=>["D","H"].includes(matrix[p.id][d])).length<1)dayGuardOK=false;}for(const p of staff){const s=matrix[p.id];for(let d=0;d<n-1;d++)if(s[d]==="N"&&s[d+1]!=="A")sequenceOK=false;if(Math.abs(offCredit(s)-target)>.001)offOK=false;if(workRun(s)>6)runOK=false;}for(const [label,ok,detail] of [["夜勤配置",coverageOK,"毎日：看護職員1名以上＋看護助手1名以上"],["夜勤系列",sequenceOK,"月内の「入→明」を全件検証"],["公休クレジット",offOK,`常勤全員 ${target} 日相当`],["連続勤務ガード",runOK,"明けを除く連続勤務を6日以内に制限"],["日中最低ガード",dayGuardOK,"内部安全ガード：日中に看護職員・助手を各1名以上"]]){if(!ok)hardFail++;checks.push({status:ok?"PASS":"FAIL",label,detail});}checks.push({status:"PENDING",label:"月境界",detail:"月末夜勤の翌月「明」と前月からの「明」は次版でcarry-over連携"},{status:"PENDING",label:"労働時間",detail:"休憩・変形労働時間制・非常勤契約条件が未登録"},{status:"PENDING",label:"様式9",detail:"15:1 / 看護師4割 / 30:1 は登録済み。Murseと同一の算定ロジックは未実装"},{status:"PENDING",label:"希望・相性",detail:"希望休、医師との組合せ、pair回避は未入力"});return{checks,hardFail};}
+function render(result,y,m,target){const table=document.getElementById("scheduleTable");let h=`<thead><tr><th class="name">職員</th><th>職種</th>`;for(let d=1;d<=result.n;d++){const w=dow(y,m,d),cls=w===0?"sun":w===6?"sat":"",wd=["日","月","火","水","木","金","土"][w];h+=`<th class="${cls}">${d}<br><span class="muted">${wd}</span></th>`;}h+=`<th>公休</th><th>夜勤</th></tr></thead><tbody>`;for(const p of result.regular){h+=`<tr><td class="name">${p.name}</td><td class="role">${p.profession}</td>`;result.matrix[p.id].forEach((s,d)=>{const wk=dow(y,m,d+1);h+=`<td class="cell-${s} ${wk===0||wk===6?"weekend":""}">${SHIFT_LABEL[s]}</td>`;});h+=`<td>${offCredit(result.matrix[p.id]).toFixed(1)}</td><td>${countShift(result.matrix[p.id],"N")}</td></tr>`;}table.innerHTML=h+`</tbody>`;document.getElementById("candidateMeta").textContent=`${y}年${m}月 / seed ${result.seed} / 公休目標 ${target}日相当 / 常勤 ${result.regular.length}名`;const v=document.getElementById("validation");v.innerHTML=result.validation.checks.map(c=>`<div class="check"><span class="badge ${c.status.toLowerCase()}">${c.status}</span><div><strong>${c.label}</strong><div class="muted small">${c.detail}</div></div></div>`).join("");const pass=result.validation.checks.filter(x=>x.status==="PASS").length,pending=result.validation.checks.filter(x=>x.status==="PENDING").length;document.getElementById("statusGrid").innerHTML=`<div class="status-card ok"><div class="k">実装Hard違反</div><div class="v">${result.validation.hardFail}</div></div><div class="status-card ok"><div class="k">PASS</div><div class="v">${pass}</div></div><div class="status-card pending"><div class="k">未実装/要確認</div><div class="v">${pending}</div></div><div class="status-card"><div class="k">候補seed</div><div class="v">${result.seed}</div></div>`;document.getElementById("csvBtn").disabled=false;}
+function generateFromUI(reroll=false){const y=+document.getElementById("year").value,m=+document.getElementById("month").value,target=+document.getElementById("offTarget").value;let seed=+document.getElementById("seed").value||1;if(reroll){seed+=Math.floor(1000+Math.random()*900000);document.getElementById("seed").value=seed;}try{currentResult=generate(y,m,target,seed);render(currentResult,y,m,target);}catch(e){alert(e.message);}}
+function csvDownload(){if(!currentResult)return;const y=+document.getElementById("year").value,m=+document.getElementById("month").value;let rows=[["職員","職種",...Array.from({length:currentResult.n},(_,i)=>`${i+1}日`),"公休クレジット","夜勤回数"]];for(const p of currentResult.regular){rows.push([p.name,p.profession,...currentResult.matrix[p.id].map(x=>SHIFT_LABEL[x]),offCredit(currentResult.matrix[p.id]),countShift(currentResult.matrix[p.id],"N")]);}const csv="\ufeff"+rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`nurse_shift_${y}-${String(m).padStart(2,"0")}_masked.csv`;a.click();URL.revokeObjectURL(a.href);}
+function init(){const ysel=document.getElementById("year"),msel=document.getElementById("month");for(let y=2026;y<=2028;y++)ysel.innerHTML+=`<option value="${y}">${y}</option>`;for(let m=1;m<=12;m++)msel.innerHTML+=`<option value="${m}">${m}</option>`;ysel.value="2026";msel.value="12";const refreshTarget=()=>{document.getElementById("offTarget").value=suggestedOffTarget(+ysel.value,+msel.value);};refreshTarget();ysel.addEventListener("change",refreshTarget);msel.addEventListener("change",refreshTarget);document.getElementById("partTimers").innerHTML=STAFF.filter(s=>s.employment==="非常勤").map(s=>`<span class="chip">${s.name} / ${s.profession}</span>`).join("");document.getElementById("generateBtn").addEventListener("click",()=>generateFromUI(false));document.getElementById("rerollBtn").addEventListener("click",()=>generateFromUI(true));document.getElementById("csvBtn").addEventListener("click",csvDownload);generateFromUI(false);}
+init();
+</script>
+</body>
+</html>
