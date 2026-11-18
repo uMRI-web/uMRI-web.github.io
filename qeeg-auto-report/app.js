@@ -115,8 +115,13 @@ function downloadBlob(blob, filename){
 }
 
 async function docxBlobToStablePdf(docxBlob){
-  if(!window.docx || !window.html2canvas || !window.jspdf){
-    throw new Error("PDF変換ライブラリの読み込みに失敗しました。ページを再読み込みしてください。");
+  const missing=[];
+  if(!window.JSZip) missing.push("JSZip");
+  if(!window.docx) missing.push("docx-preview");
+  if(!window.html2canvas) missing.push("html2canvas");
+  if(!window.jspdf || !window.jspdf.jsPDF) missing.push("jsPDF");
+  if(missing.length){
+    throw new Error("PDF変換ライブラリの読み込みに失敗しました: " + missing.join(", ") + "。ページを再読み込みしてください。");
   }
   const host=document.getElementById("pdfRenderHost");
   host.innerHTML="";
@@ -165,4 +170,10 @@ async function docxBlobToStablePdf(docxBlob){
   return pdf.output("blob");
 }
 
+console.log("PDF libs", {
+  JSZip: !!window.JSZip,
+  docx: !!window.docx,
+  html2canvas: !!window.html2canvas,
+  jspdf: !!(window.jspdf && window.jspdf.jsPDF)
+});
 boot();
