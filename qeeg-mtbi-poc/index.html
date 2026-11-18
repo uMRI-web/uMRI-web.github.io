@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>qEEG mTBI Research PoC | uMRI</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;color:#16202a;background:#f3f6f9}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:920px;margin:auto;padding:36px 18px 70px}.card{background:#fff;border-radius:18px;padding:30px;box-shadow:0 12px 36px rgba(0,0,0,.08)}
+h1{margin:.2em 0}.badge{display:inline-block;background:#fff3d8;color:#725200;border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
+.note{padding:14px 16px;background:#fff9e9;border-left:4px solid #c38a00;line-height:1.65;margin:18px 0}.privacy{padding:14px 16px;background:#eef9f3;border-left:4px solid #25834e;line-height:1.65;margin:18px 0}
+.drop{border:2px dashed #9db2c6;border-radius:14px;padding:28px;text-align:center;background:#f8fbfd}label{font-weight:700;display:block;margin:20px 0 8px}.btn{margin-top:18px;border:0;border-radius:10px;padding:12px 18px;font-size:16px;font-weight:800;background:#1769aa;color:white;cursor:pointer}.btn:disabled{opacity:.5}
+.status{margin-top:18px;padding:13px 15px;border-radius:10px;background:#eef3f7;white-space:pre-wrap;line-height:1.6}.ok{background:#eaf7ee}.err{background:#fdeeee;color:#8a1c1c}
+table{border-collapse:collapse;width:100%;margin:12px 0 22px}th,td{border:1px solid #d9e0e7;padding:9px;text-align:left}th{background:#f5f7fa}.muted{color:#687480;font-size:13px;line-height:1.6}.section{margin-top:28px}
+</style>
+</head>
+<body><div class="wrap"><div class="card">
+<div class="badge">RESEARCH PoC / mTBI・器質性脳機能障害</div>
+<h1>qEEG MIM Connectivity PoC</h1>
+<p>当院Neurofaxの <code>.m00</code>（12ch・A1/A2耳朶基準・500 Hz）から、研究用のMIM connectivity profileを算出します。</p>
+<div class="privacy"><b>データは外部サーバーへ送信しません。</b><br>すべてブラウザ内で処理します。</div>
+<div class="note"><b>重要：</b>これはmTBI診断AIではありません。MIMを当院データで計算可能かを確認する研究用PoCです。左右で参照耳が異なる影響を避けるため、耳基準が相殺される双極導出へ変換してから解析します。</div>
+<label>m00ファイル</label><div class="drop"><input id="file" type="file" accept=".m00"></div>
+<button id="run" class="btn" disabled>研究用MIM解析を実行</button>
+<div id="status" class="status">解析エンジンを準備しています…</div>
+<div id="results" class="section" hidden>
+<h2>結果</h2><div id="meta"></div>
+<h3>左右半球 MIM（双極導出5本 vs 5本）</h3>
+<table><thead><tr><th>帯域</th><th>Raw MIM</th><th>Normalized MIM</th></tr></thead><tbody id="mimRows"></tbody></table>
+<h3>EMATS互換性チェック</h3><div id="emats"></div>
+<p class="muted">MIMの正常値・mTBIカットオフはまだ設定していません。まず当院データで安定して算出できることを確認し、その後に対照群/疾患群で検証します。</p>
+</div>
+</div></div>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.29.5/full/pyodide.js"></script>
+<script src="./poc.js?v=20261118-1"></script>
+</body></html>
