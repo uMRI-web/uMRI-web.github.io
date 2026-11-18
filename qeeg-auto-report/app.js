@@ -18,25 +18,25 @@ async function boot(){
   try{
     setStatus("解析エンジンを読み込んでいます…\n1/3 Python環境を準備中");
     pyodide = await loadPyodide({indexURL: PYODIDE_BASE});
+
     setStatus("解析エンジンを読み込んでいます…\n2/3 NumPy / SciPy / Matplotlibを準備中");
     await pyodide.loadPackage(["numpy","scipy","matplotlib","micropip","lxml"]);
-    setStatus("解析エンジンを読み込んでいます…\n3/4 Word / PDF生成機能を準備中");
-    await pyodide.runPythonAsync(`import micropip\nawait micropip.install(["python-docx==1.2.0","fpdf2==2.8.4"])`);
-    setStatus("解析エンジンを読み込んでいます…\n4/4 日本語PDFフォントを準備中");
-    const fontResp = await fetch("https://raw.githubusercontent.com/open-webui/open-webui/main/backend/open_webui/static/fonts/NotoSansJP-Regular.ttf", {cache:"force-cache"});
-    if(!fontResp.ok) throw new Error("日本語PDFフォントを取得できませんでした");
-    const fontBytes = new Uint8Array(await fontResp.arrayBuffer());
-    pyodide.FS.writeFile("/tmp/NotoSansJP-Regular.ttf", fontBytes);
-    const resp = await fetch("./qeeg_engine.py", {cache:"no-store"});
+
+    setStatus("解析エンジンを読み込んでいます…\n3/3 Word生成機能を準備中");
+    await pyodide.runPythonAsync(`import micropip
+await micropip.install("python-docx==1.2.0")`);
+
+    const resp = await fetch("./qeeg_engine.py?v=20261118-4", {cache:"no-store"});
     if(!resp.ok) throw new Error("解析コードを取得できませんでした");
     const code = await resp.text();
     await pyodide.runPythonAsync(code);
+
     engineReady = true;
     setStatus("準備完了。m00ファイルを選択してください。", "ok");
     refreshButton();
   }catch(err){
     console.error(err);
-    setStatus("解析エンジンの準備に失敗しました。\n" + err.message, "err");
+    setStatus("解析エンジンの準備に失敗しました。\n" + (err?.message || err), "err");
   }
 }
 
