@@ -114,6 +114,114 @@ function downloadBlob(blob, filename){
   setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
 
+function cloneSectionWithChildren(source, children){
+  const page=source.cloneNode(false);
+  for(const child of children) page.appendChild(child.cloneNode(true));
+  return page;
+}
+
+function findChildIndexByText(children, marker){
+  return children.findIndex(el => (el.textContent || "").replace(/\s+/g,"").includes(marker.replace(/\s+/g,"")));
+}
+
+function splitTableRows(table, keepRowIndexes){
+  const clone=table.cloneNode(true);
+  const rows=[...clone.querySelectorAll("tr")];
+  rows.forEach((row,idx)=>{
+    if(!keepRowIndexes.includes(idx)) row.remove();
+  });
+  return clone;
+}
+
+function paginateDocxPreviewLikeWord(host){
+  const sections=[...host.querySelectorAll("section.docx")];
+  if(sections.length < 5) return sections;
+
+  const pages=[];
+
+  // Word page 1-2: explicit page breaks already match.
+  pages.push(sections[0].cloneNode(true));
+  pages.push(sections[1].cloneNode(true));
+
+  // Word pages 3-5: split the long Z-score section at the same visible points.
+  {
+    const src=sections[2];
+    const kids=[...src.children];
+    const i1=findChildIndexByText(kids,"O1電極のベータ波");
+    const i2=findChildIndexByText(kids,"T5電極のベータ波");
+    if(i1>=0 && i2>i1){
+      pages.push(cloneSectionWithChildren(src,kids.slice(0,i1+1)));
+      pages.push(cloneSectionWithChildren(src,kids.slice(i1+1,i2+1)));
+      pages.push(cloneSectionWithChildren(src,kids.slice(i2+1)));
+    }else{
+      pages.push(src.cloneNode(true));
+    }
+  }
+
+  // Word pages 6-10: 12 PSD figures are laid out as 2 / 3 / 3 / 3 / 1.
+  {
+    const src=sections[3];
+    const kids=[...src.children];
+    const imgIdx=kids.map((el,i)=>el.querySelector("img")?i:-1).filter(i=>i>=0);
+    if(imgIdx.length>=12){
+      const starts=[0,imgIdx[2],imgIdx[5],imgIdx[8],imgIdx[11]];
+      const ends=[imgIdx[2],imgIdx[5],imgIdx[8],imgIdx[11],kids.length];
+      for(let k=0;k<5;k++){
+        pages.push(cloneSectionWithChildren(src,kids.slice(starts[k],ends[k])));
+      }
+    }else{
+      pages.push(src.cloneNode(true));
+    }
+  }
+
+  // Word pages 11-12: split the first arousal table after its first data row.
+  {
+    const src=sections[4];
+    const kids=[...src.children];
+    const tableIdx=kids.findIndex(el => el.tagName==="TABLE" || el.querySelector("table"));
+    if(tableIdx>=0){
+      const tableEl=kids[tableIdx].tagName==="TABLE" ? kids[tableIdx] : kids[tableIdx].querySelector("table");
+      const rows=[...tableEl.querySelectorAll("tr")];
+      if(rows.length>=4){
+        const p11=src.cloneNode(false);
+        for(const child of kids.slice(0,tableIdx)) p11.appendChild(child.cloneNode(true));
+
+        let table11Wrap;
+        if(kids[tableIdx].tagName==="TABLE"){
+          table11Wrap=splitTableRows(tableEl,[0,1]);
+        }else{
+          table11Wrap=kids[tableIdx].cloneNode(true);
+          const t=table11Wrap.querySelector("table");
+          const rr=[...t.querySelectorAll("tr")];
+          rr.forEach((r,idx)=>{ if(![0,1].includes(idx)) r.remove(); });
+        }
+        p11.appendChild(table11Wrap);
+        pages.push(p11);
+
+        const p12=src.cloneNode(false);
+        let table12Wrap;
+        if(kids[tableIdx].tagName==="TABLE"){
+          table12Wrap=splitTableRows(tableEl,[2,3]);
+        }else{
+          table12Wrap=kids[tableIdx].cloneNode(true);
+          const t=table12Wrap.querySelector("table");
+          const rr=[...t.querySelectorAll("tr")];
+          rr.forEach((r,idx)=>{ if(![2,3].includes(idx)) r.remove(); });
+        }
+        p12.appendChild(table12Wrap);
+        for(const child of kids.slice(tableIdx+1)) p12.appendChild(child.cloneNode(true));
+        pages.push(p12);
+      }else{
+        pages.push(src.cloneNode(true));
+      }
+    }else{
+      pages.push(src.cloneNode(true));
+    }
+  }
+
+  return pages;
+}
+
 async function docxBlobToStablePdf(docxBlob){
   const missing=[];
   if(!window.JSZip) missing.push("JSZip");
@@ -123,6 +231,7 @@ async function docxBlobToStablePdf(docxBlob){
   if(missing.length){
     throw new Error("PDF変換ライブラリの読み込みに失敗しました: " + missing.join(", ") + "。ページを再読み込みしてください。");
   }
+
   const host=document.getElementById("pdfRenderHost");
   host.innerHTML="";
   await window.docx.renderAsync(docxBlob, host, null, {
@@ -138,7 +247,6 @@ async function docxBlobToStablePdf(docxBlob){
     useBase64URL:true
   });
 
-  // Wait for embedded images and browser fonts to finish rendering.
   const imgs=[...host.querySelectorAll("img")];
   await Promise.all(imgs.map(img=>img.complete ? Promise.resolve() : new Promise(resolve=>{
     img.onload=resolve; img.onerror=resolve;
@@ -146,26 +254,42 @@ async function docxBlobToStablePdf(docxBlob){
   if(document.fonts?.ready) await document.fonts.ready;
   await new Promise(r=>setTimeout(r,250));
 
-  const pages=[...host.querySelectorAll("section.docx")];
+  const pages=paginateDocxPreviewLikeWord(host);
   if(!pages.length) throw new Error("PDF用のWordページを描画できませんでした。");
 
+  // Replace docx-preview's 5 long sections by 12 Word-like pages for rendering.
+  host.innerHTML="";
+  for(const page of pages){
+    page.style.margin="0";
+    page.style.boxShadow="none";
+    page.style.breakAfter="page";
+    host.appendChild(page);
+  }
+  await new Promise(r=>setTimeout(r,120));
+
   const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
-  const pageW=210, pageH=297;
+  const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"letter",compress:true});
+  const pageW=215.9, pageH=279.4; // same paper size as the generated Word document
+
   for(let i=0;i<pages.length;i++){
     const canvas=await window.html2canvas(pages[i],{
-      scale:1.8,
+      scale:2.0,
       backgroundColor:"#ffffff",
       useCORS:true,
-      logging:false
+      logging:false,
+      windowWidth:pages[i].scrollWidth,
+      windowHeight:pages[i].scrollHeight
     });
-    const imgData=canvas.toDataURL("image/jpeg",0.92);
+    const imgData=canvas.toDataURL("image/png");
+    if(i>0) pdf.addPage("letter","portrait");
+
+    // Keep the rendered Word page aspect ratio and fill the Letter page.
     const ratio=Math.min(pageW/canvas.width,pageH/canvas.height);
     const w=canvas.width*ratio;
     const h=canvas.height*ratio;
-    if(i>0) pdf.addPage("a4","portrait");
-    pdf.addImage(imgData,"JPEG",(pageW-w)/2,(pageH-h)/2,w,h,undefined,"FAST");
+    pdf.addImage(imgData,"PNG",(pageW-w)/2,(pageH-h)/2,w,h,undefined,"FAST");
   }
+
   host.innerHTML="";
   return pdf.output("blob");
 }
