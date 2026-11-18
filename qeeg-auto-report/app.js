@@ -16,9 +16,9 @@ function refreshButton(){ runBtn.disabled = !(engineReady && fileEl.files && fil
 
 async function boot(){
   try{
-    setStatus("解析エンジンを読み込んでいます…\n1/4 Python環境を準備中");
+    setStatus("解析エンジンを読み込んでいます…\n1/3 Python環境を準備中");
     pyodide = await loadPyodide({indexURL: PYODIDE_BASE});
-    setStatus("解析エンジンを読み込んでいます…\n2/4 NumPy / SciPy / Matplotlibを準備中");
+    setStatus("解析エンジンを読み込んでいます…\n2/3 NumPy / SciPy / Matplotlibを準備中");
     await pyodide.loadPackage(["numpy","scipy","matplotlib","micropip","lxml"]);
     setStatus("解析エンジンを読み込んでいます…\n3/4 Word / PDF生成機能を準備中");
     await pyodide.runPythonAsync(`import micropip\nawait micropip.install(["python-docx==1.2.0","fpdf2==2.8.4"])`);
@@ -62,42 +62,38 @@ runBtn.addEventListener("click", async ()=>{
   try{
     setStatus("m00をブラウザ内に読み込んでいます…");
     const data = new Uint8Array(await file.arrayBuffer());
-    const paths=["/tmp/input.m00","/tmp/output.docx","/tmp/output.pdf","/tmp/output_bundle.zip"];
-    for(const p of paths){ try{ pyodide.FS.unlink(p); }catch(_e){} }
+    try{ pyodide.FS.unlink("/tmp/input.m00"); }catch(_e){}
+    try{ pyodide.FS.unlink("/tmp/output.docx"); }catch(_e){}
     pyodide.FS.writeFile("/tmp/input.m00", data);
 
     const inputName = inputNameEl.value || file.name.replace(/\.m00$/i,"");
     pyodide.globals.set("_input_name", inputName);
     pyodide.globals.set("_source_filename", file.name);
     const format = outputFormatEl.value;
+    const stem = file.name.replace(/\.m00$/i,"");
 
-    setStatus("解析中…\nPSD・Z-score・トポグラフィー・レポートを作成しています。");
+    setStatus("解析中…\nPSD・Z-score・トポグラフィー・Wordを作成しています。");
+    await pyodide.runPythonAsync('generate_report("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.docx")');
+    const docxBytes = pyodide.FS.readFile("/tmp/output.docx");
+    const docxBlob = new Blob([docxBytes], {type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
 
     if(format === "docx"){
-      await pyodide.runPythonAsync('generate_report("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.docx")');
-      downloadBytes(pyodide.FS.readFile("/tmp/output.docx"),
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        file.name.replace(/\.m00$/i,"")+"_脳波解析結果.docx");
+      downloadBlob(docxBlob, stem+"_脳波解析結果.docx");
       setStatus("完了しました。Wordファイルを保存しました。","ok");
-    }else if(format === "pdf"){
-      await pyodide.runPythonAsync('generate_pdf("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.pdf", "/tmp/NotoSansJP-Regular.ttf")');
-      downloadBytes(pyodide.FS.readFile("/tmp/output.pdf"),
-        "application/pdf",
-        file.name.replace(/\.m00$/i,"")+"_脳波解析結果.pdf");
+      return;
+    }
+
+    setStatus("PDFを作成しています…\nWordをブラウザ内で表示してPDF化しています。");
+    const pdfBlob = await docxBlobToStablePdf(docxBlob);
+
+    if(format === "pdf"){
+      downloadBlob(pdfBlob, stem+"_脳波解析結果.pdf");
       setStatus("完了しました。PDFファイルを保存しました。","ok");
     }else{
-      await pyodide.runPythonAsync(`
-generate_report("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.docx")
-generate_pdf("/tmp/input.m00", _input_name, _source_filename, "/tmp/output.pdf", "/tmp/NotoSansJP-Regular.ttf")
-import zipfile
-with zipfile.ZipFile("/tmp/output_bundle.zip","w",zipfile.ZIP_DEFLATED) as z:
-    z.write("/tmp/output.docx", arcname="report.docx")
-    z.write("/tmp/output.pdf", arcname="report.pdf")
-`);
-      downloadBytes(pyodide.FS.readFile("/tmp/output_bundle.zip"),
-        "application/zip",
-        file.name.replace(/\.m00$/i,"")+"_脳波解析結果_Word+PDF.zip");
-      setStatus("完了しました。Word＋PDFのZIPを保存しました。","ok");
+      downloadBlob(docxBlob, stem+"_脳波解析結果.docx");
+      await new Promise(r=>setTimeout(r,700));
+      downloadBlob(pdfBlob, stem+"_脳波解析結果.pdf");
+      setStatus("完了しました。WordとPDFを2ファイル別々に保存しました。\nブラウザから複数ダウンロードの確認が出た場合は許可してください。","ok");
     }
   }catch(err){
     console.error(err);
@@ -107,8 +103,7 @@ with zipfile.ZipFile("/tmp/output_bundle.zip","w",zipfile.ZIP_DEFLATED) as z:
   }
 });
 
-function downloadBytes(bytes, mime, filename){
-  const blob = new Blob([bytes], {type:mime});
+function downloadBlob(blob, filename){
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href=url;
@@ -116,7 +111,58 @@ function downloadBytes(bytes, mime, filename){
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
+async function docxBlobToStablePdf(docxBlob){
+  if(!window.docx || !window.html2canvas || !window.jspdf){
+    throw new Error("PDF変換ライブラリの読み込みに失敗しました。ページを再読み込みしてください。");
+  }
+  const host=document.getElementById("pdfRenderHost");
+  host.innerHTML="";
+  await window.docx.renderAsync(docxBlob, host, null, {
+    className:"docx",
+    inWrapper:true,
+    ignoreWidth:false,
+    ignoreHeight:false,
+    ignoreFonts:false,
+    breakPages:true,
+    renderHeaders:true,
+    renderFooters:true,
+    renderFootnotes:true,
+    useBase64URL:true
+  });
+
+  // Wait for embedded images and browser fonts to finish rendering.
+  const imgs=[...host.querySelectorAll("img")];
+  await Promise.all(imgs.map(img=>img.complete ? Promise.resolve() : new Promise(resolve=>{
+    img.onload=resolve; img.onerror=resolve;
+  })));
+  if(document.fonts?.ready) await document.fonts.ready;
+  await new Promise(r=>setTimeout(r,250));
+
+  const pages=[...host.querySelectorAll("section.docx")];
+  if(!pages.length) throw new Error("PDF用のWordページを描画できませんでした。");
+
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
+  const pageW=210, pageH=297;
+  for(let i=0;i<pages.length;i++){
+    const canvas=await window.html2canvas(pages[i],{
+      scale:1.8,
+      backgroundColor:"#ffffff",
+      useCORS:true,
+      logging:false
+    });
+    const imgData=canvas.toDataURL("image/jpeg",0.92);
+    const ratio=Math.min(pageW/canvas.width,pageH/canvas.height);
+    const w=canvas.width*ratio;
+    const h=canvas.height*ratio;
+    if(i>0) pdf.addPage("a4","portrait");
+    pdf.addImage(imgData,"JPEG",(pageW-w)/2,(pageH-h)/2,w,h,undefined,"FAST");
+  }
+  host.innerHTML="";
+  return pdf.output("blob");
 }
 
 boot();
